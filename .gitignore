@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+.venv
+venv/
+env/
+
+# Data
+data/
+*.csv
+*.parquet
+*.json
+
+# Models
+ml/
+*.pkl
+*.joblib
+*.model
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+logs/
+
+# Mac
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+
+
+
+
+
