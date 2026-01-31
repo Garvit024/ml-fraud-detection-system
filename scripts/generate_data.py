@@ -1,33 +1,34 @@
+import os
 import pandas as pd
-import numpy as np
+from sqlalchemy import create_engine
 from faker import Faker
-import random
+import numpy as np
 
 fake = Faker()
-np.random.seed(42)
 
-N = 50000
+# -----------------------------
+# DB Setup
+# -----------------------------
+DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///db/fraud.db")
+engine = create_engine(DATABASE_URL)
 
-customers = [f"C{i}" for i in range(1000)]
-merchants = [f"M{i}" for i in range(200)]
+# -----------------------------
+# Generate fake data
+# -----------------------------
+N = 5000
+data = {
+    "amount": np.random.uniform(10, 1000, N),
+    "tx_count": np.random.randint(1, 50, N),
+    "avg_amt": np.random.uniform(10, 500, N),
+    "merch_tx_count": np.random.randint(1, 30, N),
+    "fraud_rate": np.random.uniform(0, 1, N),
+    "is_fraud": np.random.choice([0, 1], N, p=[0.95, 0.05])
+}
 
-data = []
+df = pd.DataFrame(data)
 
-for i in range(N):
-    cust = random.choice(customers)
-    merch = random.choice(merchants)
-    amt = round(np.random.exponential(2000), 2)
-    fraud = 1 if random.random() < 0.03 else 0
-
-    data.append([
-        f"TX{i}", cust, merch, amt,
-        fake.latitude(), fake.longitude(), fraud
-    ])
-
-df = pd.DataFrame(data, columns=[
-    "transaction_id","customer_id","merchant_id",
-    "amount","lat","lon","is_fraud"
-])
-
-df.to_csv("data/raw/transactions.csv", index=False)
-print("✅ Data Generated")
+# -----------------------------
+# Insert into DB
+# -----------------------------
+df.to_sql("feature_table", engine, if_exists="replace", index=False)
+print(f"✅ Data Generated in {DATABASE_URL}")

@@ -1,25 +1,22 @@
-import sqlite3
-import pandas as pd
-from faker import Faker
-import random
 import os
+from sqlalchemy import create_engine, text
 
-DB_PATH = os.path.join("db", "fraud.db")
-conn = sqlite3.connect(DB_PATH)
+# Get DB URL from env (Railway)
+DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///db/fraud.db")
+engine = create_engine(DATABASE_URL)
 
-fake = Faker()
-rows = []
-for _ in range(10000):
-    amount = round(random.uniform(10, 5000), 2)
-    tx_count = random.randint(1, 10)
-    avg_amt = round(random.uniform(10, 3000), 2)
-    merch_tx_count = random.randint(1, 100)
-    fraud_rate = round(random.uniform(0, 0.1), 4)
-    is_fraud = random.choices([0,1], weights=[0.97,0.03])[0]
-    rows.append((amount, tx_count, avg_amt, merch_tx_count, fraud_rate, is_fraud))
+with engine.connect() as conn:
+    conn.execute(text("""
+        CREATE TABLE IF NOT EXISTS feature_table (
+            id SERIAL PRIMARY KEY,
+            amount FLOAT,
+            tx_count INT,
+            avg_amt FLOAT,
+            merch_tx_count INT,
+            fraud_rate FLOAT,
+            is_fraud INT
+        )
+    """))
+    conn.commit()
 
-df = pd.DataFrame(rows, columns=["amount","tx_count","avg_amt","merch_tx_count","fraud_rate","is_fraud"])
-df.to_sql("feature_table", conn, if_exists="replace", index=False)
-
-conn.close()
-print("✅ Dummy data inserted into feature_table")
+print(f"✅ DB and table created: {DATABASE_URL}")

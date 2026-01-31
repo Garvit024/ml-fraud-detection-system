@@ -1,5 +1,4 @@
 import os
-import sys
 import pandas as pd
 from sqlalchemy import create_engine
 from xgboost import XGBClassifier
@@ -7,35 +6,19 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
 import joblib
 
-# -----------------------------
-# Paths
-# -----------------------------
-# Get project root (fraud-detection-local)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-DB_PATH = os.path.join(BASE_DIR, "db", "fraud.db")
-MODEL_PATH = os.path.join(BASE_DIR, "ml_fraud_model.pkl")
+DATABASE_URL = os.environ.get("DATABASE_URL")
+if not DATABASE_URL:
+    raise ValueError("❌ DATABASE_URL not found")
+
+MODEL_PATH = "ml_fraud_model.pkl"  # Railway will use project root
 
 # -----------------------------
-# Check if DB exists
+# Load data
 # -----------------------------
-if not os.path.exists(DB_PATH):
-    print(f"❌ Database not found: {DB_PATH}")
-    sys.exit(1)
+engine = create_engine(DATABASE_URL)
+df = pd.read_sql("SELECT * FROM feature_table", engine)
 
-# -----------------------------
-# Load features from SQLite
-# -----------------------------
-try:
-    engine = create_engine(f"sqlite:///{DB_PATH}")
-    df = pd.read_sql("SELECT * FROM feature_table", engine)
-except Exception as e:
-    print(f"❌ Error reading from DB: {e}")
-    sys.exit(1)
-
-# -----------------------------
-# Prepare data
-# -----------------------------
-X = df[["amount", "tx_count", "avg_amt", "merch_tx_count", "fraud_rate"]]
+X = df[["amount","tx_count","avg_amt","merch_tx_count","fraud_rate"]]
 y = df["is_fraud"]
 
 X_train, X_test, y_train, y_test = train_test_split(
@@ -63,8 +46,5 @@ print(classification_report(y_test, model.predict(X_test)))
 # -----------------------------
 # Save model
 # -----------------------------
-try:
-    joblib.dump(model, MODEL_PATH)
-    print(f"✅ Model Trained & Saved: {MODEL_PATH}")
-except Exception as e:
-    print(f"❌ Error saving model: {e}")
+joblib.dump(model, MODEL_PATH)
+print(f"✅ Model saved: {MODEL_PATH}")
