@@ -105,5 +105,6 @@ Fraud Prediction Output
 
 ### Clone Repository
 ```bash
-git clone https://github.com/your-username/Walmart-Sales-Analysis.git
-cd Walmart-Sales-Analysis
+git clone https://github.com/your-username/ml-fraud-detection-system.git
+cd ml-fraud-detection-system
+
